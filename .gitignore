@@ -1,0 +1,16 @@
+# Ansible
+*.retry
+.ansible/
+
+# Secrets
+.env
+*.vault-pass
+vault-password*
+
+# SSH / private keys
+*.pem
+*.key
+
+# Editors
+.vscode/
+.idea/
