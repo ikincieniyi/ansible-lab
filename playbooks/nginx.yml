@@ -1,0 +1,82 @@
+---
+- name: Configure Nginx web servers
+  hosts: webservers
+  become: true
+
+  tasks:
+    - name: Install Nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+      tags:
+        - nginx
+        - packages
+
+    - name: Ensure Nginx is running and enabled
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+      tags:
+        - nginx
+        - service
+
+    - name: Deploy custom homepage
+      ansible.builtin.template:
+        src: templates/index.html.j2
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: "0644"
+      tags:
+        - nginx
+        - content
+
+    - name: Identify primary web server
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} is the primary web server."
+      when: server_role == "Web Server A"
+      tags:
+        -debug
+
+    - name: Deploy Ansible Nginx configuration
+      ansible.builtin.copy:
+        content: |
+          add_header X-Managed-By "Ansible" always;
+        dest: /etc/nginx/conf.d/ansible-lab.conf
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Reload Nginx
+      tags:
+        - nginx
+        - config
+
+    - name: Validate Nginx configuration
+      ansible.builtin.command:
+        cmd: nginx -t
+      changed_when: false
+      tags:
+        - nginx
+        - config
+
+    - name: Create Ansible lab directories
+      ansible.builtin.file:
+        path: "/opt/ansible-lab/{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - config
+        - data
+        - logs
+      tags:
+        - lab
+
+  handlers:
+    - name: Reload Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded
