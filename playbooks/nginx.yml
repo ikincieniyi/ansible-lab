@@ -38,7 +38,7 @@
         msg: "{{ inventory_hostname }} is the primary web server."
       when: server_role == "Web Server A"
       tags:
-        -debug
+        - debug
 
     - name: Deploy Ansible Nginx configuration
       ansible.builtin.copy:
@@ -72,6 +72,20 @@
         - config
         - data
         - logs
+      tags:
+        - lab
+
+    - name: Create role-specific directories
+      ansible.builtin.file:
+        path: "/opt/ansible-lab/{{ item.name }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - { name: "scripts", primary_only: false }
+        - { name: "backup",  primary_only: true }
+      when: not item.primary_only or server_role == "Web Server A"
       tags:
         - lab
 
