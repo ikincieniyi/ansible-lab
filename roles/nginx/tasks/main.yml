@@ -1,0 +1,50 @@
+---
+- name: Install Nginx
+  ansible.builtin.apt:
+    name: "{{ nginx_package_name }}"
+    state: present
+    update_cache: true
+  tags:
+    - nginx
+    - packages
+
+- name: Ensure Nginx is running and enabled
+  ansible.builtin.service:
+    name: "{{ nginx_service_name }}"
+    state: started
+    enabled: true
+  tags:
+    - nginx
+    - service
+
+- name: Deploy custom homepage
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: /var/www/html/index.html
+    owner: root
+    group: root
+    mode: "0644"
+  tags:
+    - nginx
+    - content
+
+- name: Deploy Ansible Nginx configuration
+  ansible.builtin.copy:
+    content: |
+      add_header {{ nginx_header_name }} "{{ nginx_header_value }}" always;
+    dest: /etc/nginx/conf.d/ansible-lab.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload Nginx
+  tags:
+    - nginx
+    - config
+
+- name: Validate Nginx configuration
+  ansible.builtin.command:
+    cmd: nginx -t
+  changed_when: false
+  tags:
+    - nginx
+    - config

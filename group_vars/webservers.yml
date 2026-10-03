@@ -1,3 +1,4 @@
 ---
 site_title: "Ansible Lab"
 site_managed_by: "Ansible"
+nginx_header_value: "Ansible-Managed-Node"
