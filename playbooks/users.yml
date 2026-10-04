@@ -1,0 +1,29 @@
+---
+- name: Manage system users
+  hosts: webservers
+  become: true
+
+  tasks:
+    - name: Ensure system users
+      ansible.builtin.user:
+        name: deployer
+        comment: "Deployment Service Account"
+        shell: /bin/bash
+        groups: sudo
+        append: true
+        state: present
+
+    - name: Set authorized key for deployer
+      ansible.posix.authorized_key:
+        user: deployer
+        state: present
+        key: "{{ lookup('file', '~/.ssh/ansible.pub') }}"
+
+    - name: Allow deployer user to have passwordless sudo
+      ansible.builtin.copy:
+        content: "deployer ALL=(ALL) NOPASSWD: ALL\n"
+        dest: /etc/sudoers.d/deployer
+        owner: root
+        group: root
+        mode: "0440"
+        validate: /usr/sbin/visudo -cf %s
