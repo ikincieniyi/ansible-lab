@@ -1,0 +1,23 @@
+---
+  - name: Test registered variables
+    hosts: webservers
+    gather_facts: false
+
+    tasks:
+      - name: Get kernel release version
+        ansible.builtin.command:
+          cmd: uname -r
+        register: kernel_output
+        changed_when: false
+
+      - name: Inspect the registered variable
+        ansible.builtin.debug:
+          msg: "{{ inventory_hostname }} cekirdek surumu: {{ kernel_output.stdout }}"
+
+      - name: Check directory count in /opt/ansible-lab
+        ansible.builtin.command:
+          cmd: ls -1 /opt/ansible-lab
+        register: dir_list
+        changed_when: false
+        failed_when: dir_list.stdout_lines | length < 10
+
